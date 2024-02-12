@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-2j0o+w@1=9&i!5ouj7^lg166s*9n5y$i7ne%n&90s9%0ffo9qs
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['3.95.16.209']
 
 
 # Application definition
@@ -91,6 +91,7 @@ REST_FRAMEWORK = {
     ],
 }
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 
 # Password validation
