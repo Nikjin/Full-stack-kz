@@ -1,3 +1,4 @@
+#models.py
 from django.db import models
 
 class Category(models.Model):
@@ -34,7 +35,6 @@ class Item(models.Model):
     def create(cls, sku, name, category, tags, stock_status, available_stock):
         item = cls(SKU=sku, name=name, category=category, stock_status=stock_status, available_stock=available_stock)
         item.save()
-        item.tags.set(tags)
         return item
 
     def update_item(self, sku, name, category, tags, stock_status, available_stock):

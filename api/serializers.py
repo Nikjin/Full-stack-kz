@@ -3,26 +3,30 @@
 from rest_framework import serializers
 from .models import Item, Category, Tag
 
+class TagField(serializers.ListField):
+    child = serializers.IntegerField()
+
+    def to_representation(self, data):
+        return [tag.name for tag in data.all()]
+
+    def to_internal_value(self, data):
+        return [Tag.objects.get_or_create(id=tag_id)[0] for tag_id in data]
+
 class ItemSerializer(serializers.ModelSerializer):
-    category = serializers.CharField(write_only=True)
-    tags = serializers.ListField(write_only=True)
+    category = serializers.CharField(max_length=100)
+    tags = TagField()  # Change to a ListField that accepts integers (tag IDs)
 
     class Meta:
         model = Item
         fields = ['SKU', 'name', 'category', 'tags', 'stock_status', 'available_stock']
 
     def create(self, validated_data):
-        category_data = validated_data.pop('category', None)
+        category_name = validated_data.pop('category')
         tags_data = validated_data.pop('tags', [])
 
-        # Create or get Category instance
-        category, _ = Category.objects.get_or_create(name=category_data)
+        category, _ = Category.objects.get_or_create(name=category_name)
+        item = Item.objects.create(category=category, **validated_data)
+        item.tags.set(tags_data)  # assuming tags_data is a list of Tag instances
+        return item
 
-        # Create Tag instances
-        tags = [Tag.objects.get_or_create(name=tag_data)[0] for tag_data in tags_data]
 
-        # Create Item instance with the related Category and Tags
-        instance = Item.objects.create(category=category, **validated_data)
-        instance.tags.set(tags)
-
-        return instance

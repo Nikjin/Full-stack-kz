@@ -8,10 +8,9 @@ from .views import ItemListView
 
 
 urlpatterns = [
-
     path('register/', UserRegistrationView.as_view(), name='user-registration'),
     path('login/', LoginView.as_view(), name='login'),
     path('item-dashboard/', ItemDashboardView.as_view(), name='item-dashboard'),
     path('item-list/', ItemListView.as_view(), name='item-list'),
-    # Add more URL patterns for other API endpoints if needed
+    path('item-dashboard/<int:item_id>/', ItemDashboardView.as_view(), name='delete-item'),
 ]

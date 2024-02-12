@@ -1,0 +1,515 @@
+<!-- item_dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Item Dashboard - Kaizntree</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: auto;
+            width: 80%;
+            overflow: hidden;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            color: #333;
+        }
+
+        td {
+            background-color: #fff;
+            color: #333;
+        }
+
+        tr:nth-child(even) td {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover td {
+            background-color: #f2f2f2;
+        }
+
+        #newItemBtn {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        #newItemBtn:hover {
+            background-color: #0056b3;
+        }
+
+        #newItemPopup {
+            background-color: rgba(0, 0, 0, 0.8);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        #newItemForm {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            width: 400px;
+            text-align: center;
+        }
+
+        #newItemForm label {
+            display: block;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+
+        #newItemForm input[type="text"],
+        #newItemForm input[type="number"],
+        #newItemForm select {
+            width: calc(100% - 20px);
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        #newItemForm input[type="submit"],
+        #newItemForm button {
+            background-color: #4caf50;
+            color: #fff;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 48%;
+        }
+
+        #newItemForm button {
+            background-color: #dc3545;
+            margin-left: 4%;
+        }
+
+        #closeNewItemPopup {
+            background-color: #dc3545;
+            color: #fff;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        #closeNewItemPopup:hover {
+            background-color: #c82333;
+        }
+
+        #sortSelect {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            margin-left: 10px; /* Adjust as needed */
+            cursor: pointer;
+        }
+
+        .sort-icon {
+            margin-left: -30px; /* Adjust based on actual size and spacing */
+            position: relative;
+            z-index: 2;
+            cursor: pointer;
+}
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Item Dashboard</h1>
+    <!-- Add New Item Button -->
+    <button id="newItemBtn">New Item</button>
+
+    <input type="text" id="searchBox" placeholder="Search items...">
+    <div id="suggestionsContainer" style="display:none;"></div>
+
+    <div style="position: relative; display: inline-block;">
+        <select id="sortSelect">
+            <option disabled selected>Sort by</option>
+            <option value="name">Name</option>
+            <option value="SKU">SKU</option>
+            <option value="category">Category</option>
+            <option value="available_stock">Available Stock</option>
+        </select>
+        <i class="fas fa-sort sort-icon"></i>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+        <select id="categoryFilter">
+            <option value="">All Categories</option>
+            <!-- Options will be dynamically populated -->
+        </select>
+        <select id="tagFilter">
+            <option value="">All Tags</option>
+            <!-- Options will be dynamically populated -->
+        </select>
+        <select id="stockStatusFilter">
+            <option value="">All Stock Statuses</option>
+            <option value="In Stock">In Stock</option>
+            <option value="Low Stock">Low Stock</option>
+            <option value="Out of Stock">Out of Stock</option>
+        </select>
+        <button id="applyFilters">Apply Filters</button>
+    </div>
+
+    <!-- Table to display items -->
+    <table>
+        <thead>
+        <tr>
+            <th>SKU</th>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Tags</th>
+            <th>Stock Status</th>
+            <th>Available Stock</th>
+            <th>Actions</th> <!-- New column for delete button -->
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in items %}
+        <tr>
+            <td>{{ item.SKU }}</td>
+            <td>{{ item.name }}</td>
+            <td>{{ item.category.name }}</td>
+            <td>
+                {% for tag in item.tags.all %}
+                {{ tag.name }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </td>
+            <td>{{ item.stock_status }}</td>
+            <td>{{ item.available_stock }}</td>
+            <td>
+                <button class="deleteBtn" data-item-id="{{ item.id }}">Delete</button> <!-- Delete button -->
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+
+    <!-- New Item Form Popup -->
+    <div id="newItemPopup" style="display: none;">
+        <form id="newItemForm">
+            <label for="SKU">SKU:</label>
+            <input type="text" id="SKU" name="SKU" required><br>
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required><br>
+            <label for="category">Category:</label>
+            <input type="text" id="category" name="category" required><br>
+            <label for="tags">Tags:</label>
+            <input type="text" id="tags" name="tags" placeholder="Enter tags separated by commas" required><br>
+            <label for="stock_status">Stock Status:</label>
+            <select id="stock_status" name="stock_status" required>
+                <option value="In Stock">In Stock</option>
+                <option value="Low Stock">Low Stock</option>
+                <option value="Out of Stock">Out of Stock</option>
+            </select><br>
+            <label for="available_stock">Available Stock:</label>
+            <input type="number" id="available_stock" name="available_stock" required><br>
+            <input type="submit" value="Create">
+            <button type="button" id="closeNewItemPopup">Close</button>
+        </form>
+    </div>
+</div>
+
+<!-- Your existing JavaScript -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    // Add event listener to delete buttons
+    document.querySelectorAll('.deleteBtn').forEach(button => {
+        button.addEventListener('click', function() {
+            const itemId = this.getAttribute('data-item-id');
+            if (confirm("Are you sure you want to delete this item?")) {
+                // Send AJAX request to delete the item
+                fetch(`/api/item-dashboard/${itemId}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken') // Include CSRF token in headers
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Reload the page after successful deletion of the item
+                        location.reload();
+                    } else {
+                        // Display error message
+                        alert('Failed to delete item.');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        });
+    });
+
+    document.getElementById('closeNewItemPopup').addEventListener('click', function() {
+        // Hide the pop-up window
+        document.getElementById('newItemPopup').style.display = 'none';
+    });
+
+    document.getElementById('newItemForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        // Get form data
+        const formData = new FormData(this);
+
+        // Convert form data to JSON object
+        const jsonObject = {};
+        formData.forEach(function(value, key){
+            if (key === 'tags') {
+                // Split the tags string into a list of tags
+                const tags = value.split(',').map(tag => tag.trim());
+                // Remove empty tags
+                jsonObject[key] = tags.filter(tag => tag !== '');
+                // Check if any tag is empty
+                if (tags.includes('')) {
+                    alert('Please provide a valid tag value.');
+                    return; // Stop further processing
+                }
+            } else {
+                jsonObject[key] = value;
+            }
+        });
+
+        // Send AJAX request to create a new item
+        fetch('/api/item-dashboard/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken') // Include CSRF token in headers
+            },
+            body: JSON.stringify(jsonObject)
+        })
+            .then(response => {
+                if (response.ok) {
+                    // Reload the page after successful creation of the item
+                    location.reload();
+                } else {
+                    // Display error messages from the response
+                    response.json().then(data => {
+                        let errorMessage = 'Failed to create item. Please check your input and try again.\n';
+                        for (const [field, errors] of Object.entries(data)) {
+                            errorMessage += `${field}: ${errors.join(', ')}\n`;
+                        }
+                        alert(errorMessage);
+                    });
+                }
+            })
+            .catch(error => console.error('Error:', error));
+
+        // Close the pop-up window
+        document.getElementById('newItemPopup').style.display = 'none';
+    });
+
+
+    // Add event listener to "New Item" button
+    document.getElementById('newItemBtn').addEventListener('click', function() {
+        // Display the pop-up window
+        document.getElementById('newItemPopup').style.display = 'block';
+    });
+
+
+    // Search Box
+    $(document).ready(function() {
+        $('#searchBox').on('input', function() {
+            var searchQuery = $(this).val();
+
+            // Only perform the search if we have 3 or more characters
+            if (searchQuery.length >= 1) {
+                $.ajax({
+                    url: '/api/item-list/', // Adjust this URL to match your Django URL configuration
+                    data: { 'search': searchQuery },
+                    dataType: 'json',
+                    success: function(data) {
+                        updateTableWithSearchResults(data);
+                    },
+                    error: function(xhr, status, error) {
+                        // Handle any errors here
+                        console.error('Search error:', status, error);
+                    }
+                });
+            }
+            if (searchQuery.length >= 1 || searchQuery.length === 0) {
+            $.ajax({
+                url: '/api/item-list/',
+                data: { 'search': searchQuery },
+                dataType: 'json',
+                success: function(data) {
+                    updateTableWithSearchResults(data);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Search error:', status, error);
+                }
+            });
+        }
+        });
+
+        // Apply Filters Functionality
+        $('#applyFilters').click(function() {
+            var searchQuery = $('#searchBox').val();
+            var sortBy = $('#sortSelect').val() || 'name'; // Default to sorting by name if no option selected
+            var category = $('#categoryFilter').val();
+            var tag = $('#tagFilter').val();
+            var stockStatus = $('#stockStatusFilter').val();
+
+            $.ajax({
+                url: '/api/item-list/',
+                data: {
+                    search: searchQuery,
+                    sort: sortBy, // Pass the value of sortBy parameter
+                    category: category,
+                    tag: tag,
+                    stock_status: stockStatus,
+                },
+                success: function(data) {
+                    updateTableWithSearchResults(data);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error:', status, error);
+                }
+            });
+        });
+
+    });
+
+
+
+    function updateTableWithSearchResults(data) {
+        var tableBody = $('table tbody');
+        tableBody.empty(); // Clear existing table rows
+
+        // Append new rows to the table
+        data.forEach(function(item) {
+            tableBody.append(`
+                <tr>
+                    <td>${item.SKU}</td>
+                    <td>${item.name}</td>
+                    <td>${item.category}</td>
+                    <td>${item.tags.join(', ')}</td>
+                    <td>${item.stock_status}</td>
+                    <td>${item.available_stock}</td>
+                    <td>
+                        <button class="deleteBtn" data-item-id="${item.id}">Delete</button>
+                    </td>
+                </tr>
+            `);
+        });
+
+        // Reattach event listeners to delete buttons if needed
+        attachDeleteEventListeners();
+    }
+
+     function attachDeleteEventListeners() {
+        // Remove any existing click handlers from delete buttons to prevent duplicates
+        $(document).on('click', '.deleteBtn', function() {
+            var itemId = $(this).data('item-id');
+
+            // Confirm with the user that they want to delete the item
+            if (confirm('Are you sure you want to delete this item?')) {
+                // Make an AJAX request to the server to delete the item
+                $.ajax({
+                    url: '/delete-item/' + itemId, // The URL to your delete endpoint
+                    method: 'POST', // or 'DELETE', depending on your server setup
+                    data: {
+                        // Your CSRF token and any other data needed
+                    },
+                    success: function(response) {
+                        // If the server indicates success, remove the item from the table
+                        $('tr[data-item-id="' + itemId + '"]').remove();
+                    },
+                    error: function(xhr, status, error) {
+                        // If there was an error, you can alert the user or handle it otherwise
+                        alert('Could not delete item: ' + error);
+                    }
+                });
+            }
+        });
+    }
+
+    $('#sortSelect').on('change', function() {
+        var sortBy = $(this).val();
+        var searchQuery = $('#searchBox').val(); // Assuming you want to maintain the current search query
+        $.ajax({
+            url: '/api/item-list/',
+            data: { 'search': searchQuery, 'sort': sortBy },
+            dataType: 'json',
+            success: function(data) {
+                updateTableWithSearchResults(data);
+            }
+        });
+    });
+
+
+
+
+
+
+    // Function to get CSRF token from cookies
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Search for the csrf token
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+
+
+
+</script>
+
+</body>
+</html>
