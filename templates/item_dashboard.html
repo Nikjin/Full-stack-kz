@@ -223,7 +223,7 @@
             <td>{{ item.stock_status }}</td>
             <td>{{ item.available_stock }}</td>
             <td>
-                <button class="deleteBtn" data-item-id="{{ item.id }}">Delete</button> <!-- Delete button -->
+                <button class="deleteBtn" data-sku="{{ item.SKU }}">Delete</button>
             </td>
         </tr>
         {% endfor %}
@@ -263,22 +263,19 @@
     // Add event listener to delete buttons
     document.querySelectorAll('.deleteBtn').forEach(button => {
         button.addEventListener('click', function() {
-            const itemId = this.getAttribute('data-item-id');
+            const sku = this.dataset.sku;
             if (confirm("Are you sure you want to delete this item?")) {
-                // Send AJAX request to delete the item
-                fetch(`/api/item-dashboard/${itemId}/`, {
+                fetch(`/api/item-dashboard/${sku}/`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken') // Include CSRF token in headers
+                        'X-CSRFToken': getCookie('csrftoken')
                     }
                 })
                 .then(response => {
                     if (response.ok) {
-                        // Reload the page after successful deletion of the item
                         location.reload();
                     } else {
-                        // Display error message
                         alert('Failed to delete item.');
                     }
                 })
@@ -286,6 +283,7 @@
             }
         });
     });
+
 
     document.getElementById('closeNewItemPopup').addEventListener('click', function() {
         // Hide the pop-up window
@@ -302,15 +300,8 @@
         const jsonObject = {};
         formData.forEach(function(value, key){
             if (key === 'tags') {
-                // Split the tags string into a list of tags
-                const tags = value.split(',').map(tag => tag.trim());
-                // Remove empty tags
-                jsonObject[key] = tags.filter(tag => tag !== '');
-                // Check if any tag is empty
-                if (tags.includes('')) {
-                    alert('Please provide a valid tag value.');
-                    return; // Stop further processing
-                }
+                // Split the tags string into a list of strings, trim whitespace, and remove any empty strings
+                jsonObject[key] = value.split(',').map(tag => tag.trim()).filter(tag => tag !== '');
             } else {
                 jsonObject[key] = value;
             }
@@ -434,7 +425,7 @@
                     <td>${item.stock_status}</td>
                     <td>${item.available_stock}</td>
                     <td>
-                        <button class="deleteBtn" data-item-id="${item.id}">Delete</button>
+                        <button class="deleteBtn" data-sku="${item.SKU}">Delete</button>
                     </td>
                 </tr>
             `);
@@ -444,32 +435,39 @@
         attachDeleteEventListeners();
     }
 
-     function attachDeleteEventListeners() {
-        // Remove any existing click handlers from delete buttons to prevent duplicates
-        $(document).on('click', '.deleteBtn', function() {
-            var itemId = $(this).data('item-id');
-
-            // Confirm with the user that they want to delete the item
-            if (confirm('Are you sure you want to delete this item?')) {
-                // Make an AJAX request to the server to delete the item
-                $.ajax({
-                    url: '/delete-item/' + itemId, // The URL to your delete endpoint
-                    method: 'POST', // or 'DELETE', depending on your server setup
-                    data: {
-                        // Your CSRF token and any other data needed
-                    },
-                    success: function(response) {
-                        // If the server indicates success, remove the item from the table
-                        $('tr[data-item-id="' + itemId + '"]').remove();
-                    },
-                    error: function(xhr, status, error) {
-                        // If there was an error, you can alert the user or handle it otherwise
-                        alert('Could not delete item: ' + error);
-                    }
-                });
-            }
+    function attachDeleteEventListeners() {
+        // Add event listener to delete buttons
+        document.querySelectorAll('.deleteBtn').forEach(button => {
+            button.removeEventListener('click', deleteItem); // Remove existing event listener if any
+            button.addEventListener('click', deleteItem); // Add new event listener
         });
     }
+
+    function deleteItem() {
+        const sku = this.getAttribute('data-sku');
+        if (confirm("Are you sure you want to delete this item with SKU=" + sku)) {
+            fetch( `/api/item-dashboard/${sku}/`, {  // Update URL construction here
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Reload the page after successful deletion of the item
+                    location.reload();
+                } else {
+                    alert('Failed to delete item.');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    }
+
+
+
+
 
     $('#sortSelect').on('change', function() {
         var sortBy = $(this).val();

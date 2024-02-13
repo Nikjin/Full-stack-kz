@@ -15,6 +15,10 @@ from rest_framework import status
 from django.http import JsonResponse
 from django.db.models import Q
 from django.contrib import messages
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class UserRegistrationView(APIView):
     authentication_classes = []  # Exempt from CSRF protection
@@ -76,25 +80,32 @@ class ItemDashboardView(APIView):
         return render(request, 'item_dashboard.html', {'items': items})
 
     def post(self, request):
+        logger.debug(f"Request Data: {request.data}")  # Log the request data
         serializer = ItemSerializer(data=request.data)  # Use request.data instead of request.POST
-        print("Request Data:", request.data)  # Debug print statement
+        # print("Request Data:", request.data)  # Debug print statement
         if serializer.is_valid():
-            print("Serializer is valid. Saving...")  # Debug print statement
+            # print("Serializer is valid. Saving...")  # Debug print statement
+            logger.debug(f"Processed Tags Data: {serializer.validated_data.get('tags')}")
+
             serializer.save()
-            print("Item saved successfully.")  # Debug print statement
+            # print("Item saved successfully.")  # Debug print statement
             return redirect('item-dashboard')  # Redirect back to item dashboard after creating the item
         else:
-            print("Serializer errors:", serializer.errors)  # Debug print statement
+            # print("Serializer errors:", serializer.errors)  # Debug print statement
             # If the form is invalid, render the item dashboard template with error messages
             items = Item.objects.all()
             return render(request, 'item_dashboard.html', {'items': items, 'errors': serializer.errors})
-    def delete(self, request, item_id):
+    def delete(self, request, sku):
         try:
-            item = Item.objects.get(id=item_id)
-            item.delete()
-            return JsonResponse({'message': 'Item deleted successfully'}, status=204)
-        except Item.DoesNotExist:
-            return JsonResponse({'error': 'Item not found'}, status=404)
+            item = Item.objects.filter(SKU=sku).first()
+            if item:
+                item.delete()  # Delete the item
+                return JsonResponse({'message': 'Item deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+            else:
+                return JsonResponse({'error': 'Item not found.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return JsonResponse({'error': 'Failed to delete item.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class ItemListView(APIView):
     permission_classes = [IsAuthenticated]

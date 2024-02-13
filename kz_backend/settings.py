@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-2j0o+w@1=9&i!5ouj7^lg166s*9n5y$i7ne%n&90s9%0ffo9qs
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['3.95.16.209']
+ALLOWED_HOSTS = ['3.95.16.209', '127.0.0.1']
 
 
 # Application definition
@@ -111,6 +111,25 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        '': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
+
 
 
 # Internationalization

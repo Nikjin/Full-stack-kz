@@ -12,5 +12,5 @@ urlpatterns = [
     path('login/', LoginView.as_view(), name='login'),
     path('item-dashboard/', ItemDashboardView.as_view(), name='item-dashboard'),
     path('item-list/', ItemListView.as_view(), name='item-list'),
-    path('item-dashboard/<int:item_id>/', ItemDashboardView.as_view(), name='delete-item'),
+    path('item-dashboard/<str:sku>/', ItemDashboardView.as_view(), name='item-delete'),
 ]
